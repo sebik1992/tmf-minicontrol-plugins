@@ -133,7 +133,6 @@ export default class MiniManiaTeam extends Plugin {
             tmc.cli(`${LOG}   Team "${nat}": ${team.players.size} player(s) — ${[...team.players.keys()].join(", ")}`);
         }
 
-        tmc.cli(`${LOG} Creating Widget at path: userdata/plugins/maniateam2/ui.xml.twig`);
         try {
             const initialData = this.buildUIData();
             tmc.cli(`${LOG} buildUIData() OK — ${initialData.teams.length} team(s)`);
@@ -200,11 +199,10 @@ export default class MiniManiaTeam extends Plugin {
             };
             tmc.cli(`${LOG} BeginMap: uuid="${data[0].UId}"  map="${data[0].Name}"  author=${data[0].AuthorTime}ms  bronze=${data[0].BronzeTime}ms`);
 
-            // Reset per-map session state, preserving DB-loaded allTimeBestScore.
             for (const team of this.teams.values()) {
                 team.bestScore          = 0;
                 team.lastRoundScore     = 0;
-				team.allTimeBestScore   = 0; //will merge with DB results, by default 0
+				team.allTimeBestScore   = 0;
 				team.achievedAllTimeHigh = false;
                 team.lastRoundMultiplier = this.getTeamMultiplier(team.players.size);
                 for (const player of team.players.values()) {
@@ -213,8 +211,6 @@ export default class MiniManiaTeam extends Plugin {
                 }
             }
 
-            // Load DB records for the new map — this also creates ghost teams for
-            // countries that have records but no players currently on the server.
             await this.loadDatabaseScores(data[0].UId);
 
             await this.updateUI();
@@ -447,7 +443,6 @@ export default class MiniManiaTeam extends Plugin {
                     team.bestScore = roundScore;
                 }
 
-                // Persist if this round beats the all-time best for this map.
                 if (this.mapInfo && roundScore > team.allTimeBestScore) {
                     team.allTimeBestScore    = roundScore;
                     team.achievedAllTimeHigh = true;
@@ -486,10 +481,8 @@ export default class MiniManiaTeam extends Plugin {
 
     private buildUIData(): UIData {
         const sorted = [...this.teams.values()]
-            // Show teams that have online players OR a historical DB record.
             .filter(t => t.players.size > 0 || t.allTimeBestScore > 0)
             .sort((a, b) => {
-                // Sort by current session best first; fall back to all-time best.
                 const diff = b.bestScore - a.bestScore;
                 return diff !== 0 ? diff : b.allTimeBestScore - a.allTimeBestScore;
             });
