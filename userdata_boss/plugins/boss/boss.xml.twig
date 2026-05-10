@@ -1,0 +1,44 @@
+{% extends "core/templates/widget.xml.twig" %}
+
+{#
+Expected data structure:
+{
+    name: string,
+    currentHp: number,
+    maxHp: number,
+	damageMulti: number,
+	healsPerSecond: number,
+    damageDealers: { login: string, damage: number }[]
+}
+#}
+
+{% block content %}
+    {# --- Boss HP Bar (Center Top) --- #}
+    <frame posn="0 25 1" halign="center" valign="top">
+        <label posn="0 6 2" textsize="3" halign="center" text="$fa0$s$o{{ data.name }}" textcolor="fff"/>
+        <label posn="0 2 2" textsize="2" halign="center" text="$o{{ data.currentHp|number_format(0) }}/{{ data.maxHp|number_format(0) }} HP" textcolor="fff"/>
+        <quad posn="-25 3 0" sizen="50 4" style="Bgs1" substyle="BgProgressBar"/>
+        <quad posn="-25 3 1" sizen="{{ 50 * data.currentHp / data.maxHp }} 4" style="Bgs1" substyle="ProgressBar"/>
+		{% if data.damageMulti != 1 %}
+		<quad posn="-15 -1 2" sizen="2 2" style="Icons128x128_1" substyle="ServersSuggested"/>
+		<label posn="-13 -1 2" textsize="1.1" text="$stakes x{{ data.damageMulti }} damage" textcolor="fff"/>
+		{% endif %}
+		{% if data.healsPerSecond != 0 %}
+		<quad posn="2 -1 2" sizen="2 2" style="Icons128x128_1" substyle="ServersFavorites"/>
+		<label posn="4 -1 2" textsize="1.1" text="$sheals {{ data.healsPerSecond }}HP per second" textcolor="fff"/>
+		{% endif %}
+    </frame>
+
+    {# --- Damage Panel (Left Side) --- #}
+    <frame posn="48 -24 1" >
+        <quad sizen="15 14" style="Bgs1" substyle="NavButton"/>
+        <label posn="1 -2 2" textsize="1" valign="center" text="$s$oTop damage:" textcolor="fa0" />
+
+        {# --- Top Damage Dealers List --- #}
+		{% for dealer in data.damageDealers %}
+			{% set rank_y_pos = -3 + (loop.index * -1.8) %}
+			<label posn="1 {{ rank_y_pos }} 2" textsize="1" halign="left" valign="center" text="{{ dealer.login|escape }}" textcolor="fff"/>
+			<label posn="14 {{ rank_y_pos }} 2" textsize="1" halign="right" valign="center" text="$s{{ dealer.damage|number_format(0) }}" textcolor="fff"/>
+		{% endfor %}
+    </frame>
+{% endblock %}

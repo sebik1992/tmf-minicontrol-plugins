@@ -1,0 +1,12 @@
+{% extends "core/templates/widget.xml.twig" %}
+{% block content %}
+    <frame posn="48 10.5 1" >
+        <quad sizen="15 50" style="Bgs1" substyle="NavButton"/>
+        <label posn="1 1 2" textsize="1" valign="center" scale="0.3" text="Live rankings:" style="TextRaceChrono" textcolor="0af8" />
+		{% for player in data %}
+			{% set rank_y_pos = -0.5 + (loop.index * -1.6) %}
+			<label posn="1 {{ rank_y_pos }} 2" scale="0.55" halign="left" valign="center" text="{{ player.nickname|escape }}" textcolor="ffff"/>
+			<label posn="14 {{ rank_y_pos }} 2" scale="0.25" style="TextRaceChrono" halign="right" valign="center" text="$s{{ player.score|number_format(0) }}" textcolor="ffff"/>
+		{% endfor %}
+    </frame>
+{% endblock %}

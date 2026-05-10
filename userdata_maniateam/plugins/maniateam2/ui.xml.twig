@@ -1,0 +1,170 @@
+{% extends "core/templates/widget.xml.twig" %}
+{% block content %}
+{#
+  MiniManiaTeam — compact left-side HUD, styled after MiniControl Records panel.
+
+  Layout constants (all in Manialink units, TMF posn/sizen space):
+    H_TITLE       = 2.2   — header bar
+    H_STAND_ROW   = 1.8   — compact standings row
+    H_SEPARATOR   = 0.5   — rule between standings and details
+    H_DETAIL_GAP  = 0.2   — gap after separator
+    H_TEAM_HDR    = 1.8   — team sub-header in detail section
+    H_PLAYER_ROW  = 1.8   — each player row
+    H_MULTIPLIER  = 1.7   — multiplier row
+    H_ROUND       = 1.7   — round score row
+    H_BEST        = 2.0   — BEST SCORE row
+    H_BETWEEN     = 0.6   — gap between team blocks
+
+  Panel width: 15 units  (posn="-63 0", right edge at x=-48)
+  Palette: near-black semi-transparent; near-white text; no strong colour accents.
+  Times and scores use style="TextRaceChrono" (in-game digital timer font).
+#}
+
+{# ── Pass 1: total panel height ──────────────────────────────────────────── #}
+{% set totalH = 2.2 + (data.teams|length * 1.8) + 0.5 + 0.2 %}
+{% for team in data.teams %}
+  {% if team.playerCount > 0 %}
+    {% set totalH = totalH + 1.8 + (team.players|length * 1.8) + 1.7 + 1.7 + 2.0 + 0.6 %}
+  {% endif %}
+{% endfor %}
+
+<frame posn="-63 40 5">
+
+  {# Main background — near-black, semi-transparent #}
+  <quad posn="0 0 0" sizen="15 {{ totalH }}" bgcolor="0006" />
+
+  {# ── Header bar ─────────────────────────────────────────────────────────── #}
+  <quad  posn="0 0 1"      sizen="15 2.2"   bgcolor="{{colors.title_bg}}d" />
+  <label posn="7.5 -0.45 2" sizen="14 1.6"
+         text="$o$fffManiaTeam2"
+         scale="0.65"
+         halign="center" />
+
+  {# ── Compact standings ───────────────────────────────────────────────────── #}
+  {% for team in data.teams %}
+  {% set rankPos   = loop.index %}
+  {% set standingY = 2.2 + loop.index0 * 1.8 %}
+  <frame posn="0 -{{ standingY }} 1">
+    {# Rank #}
+    <label posn="1.0 -0.35 2" sizen="1.5 1.2"
+           text="$fff{{ rankPos }}"
+           scale="0.5"
+           halign="center" />
+
+    {# Country name #}
+    <label posn="2.2 -0.35 2" sizen="8 1.2"
+           text="$fff{{ team.nationality }}"
+           scale="0.5" />
+
+    {# Best score #}
+    <label posn="14.6 -0.25 2" sizen="10 1.5"
+           text="$fff{{ team.allTimeBestScore }}"
+           scale="0.25"
+           style="TextRaceChrono"
+           halign="right" />
+  </frame>
+  {% endfor %}
+
+  {# Separator #}
+  {% set standingsSectionH = 2.2 + (data.teams|length * 1.8) + 0.5 + 0.2 %}
+  <quad posn="0.5 -{{ standingsSectionH - 0.35 }} 2"
+        sizen="14 0.07" bgcolor="{{colors.widget_bg}}5" />
+
+  {# ── Per-team detail blocks ──────────────────────────────────────────────── #}
+  {% set curY = standingsSectionH %}
+
+  {% for team in data.teams %}
+    {% if team.playerCount > 0 %}
+ 
+		{# Team sub-header — slightly lighter than main bg #}
+		<frame posn="0 -{{ curY }} 1">
+		  <quad posn="0 0 0" sizen="15 1.8" bgcolor="{{colors.highlight}}8" />
+		  <label posn="0.8 -0.35 2" sizen="18 1.2"
+				 text="$eee{{ team.nationality|upper }}"
+				 scale="0.5" />
+		  <label posn="14.5 -0.4 2" sizen="10 1.1"
+				 text="$fff{{ team.playerCount }}p"
+				 scale="0.35"
+				 halign="right" />
+		</frame>
+
+		{# Player rows #}
+		{% for player in team.players %}
+		{% set playerY = curY + 1.8 + loop.index0 * 1.8 %}
+		<frame posn="0 -{{ playerY }} 1">
+		  {# Player name #}
+		  <label posn="1.5 -0.35 2" sizen="10 1.2"
+				 text="{{ player.nickName }}"
+				 scale="0.4" />
+
+		  <label posn="10.5 -0.25 2" sizen="6 1.4"
+				 text="{{ player.lastTime }}"
+				 scale="0.4"
+				 halign="right" />
+				 
+		  <label posn="14.5 -0.25 2" sizen="10 1.4"
+				 text="{{ player.lastScore }}"
+				 scale="0.22"
+				 style="TextRaceChrono"
+				 halign="right" />
+
+		</frame>
+		{% endfor %}
+
+		{# Summary rows #}
+		{% set multY  = curY + 1.8 + (team.players|length * 1.8) %}
+		{% set roundY = multY + 1.7 %}
+		{% set bestY  = roundY + 1.7 %}
+
+		{# Multiplier #}
+		<frame posn="0 -{{ multY }} 1">
+		  <quad posn="0 0 0" sizen="15 1.7" />
+		  <label posn="14.5 -0.2 2" sizen="10 1.4"
+				 text="$fff{{ team.playerCount > 10 ? 'top10 cutoff' : 'x'+team.multiplier }}"
+				 scale="0.35"
+				 halign="right" />
+		</frame>
+
+		{# Round score #}
+		<frame posn="0 -{{ roundY }} 1">
+		  <quad posn="0 0 0" sizen="15 1.7" bgcolor="{{colors.window_bg_dark}}4" />
+		  <label posn="1.5 -0.3 2" sizen="10 1.2"
+				 text="Last score"
+				 scale="0.45"
+				 textcolor="fffa" />
+		  <label posn="14.5 -0.2 2" sizen="10 1.4"
+				 text="$fff{{ team.lastRoundScore }}"
+				 scale="0.25"
+				 style="TextRaceChrono"
+				 halign="right" />
+		</frame>
+
+		{# Best score #}
+		<frame posn="0 -{{ bestY }} 1">
+		  <quad posn="0 0 0"  sizen="15 2.0" bgcolor="{{colors.window_bg_dark}}8" />
+		  <label posn="1.5 -0.4 2" sizen="15 1.3"
+				 text="{{ team.isAllTimeHigh ? '$f00NEW RECORD!' : '$ff0Best score' }}"
+				 scale="0.45" />
+		  <label posn="14.5 -0.25 2" sizen="10 1.6"
+				 text="{{ team.isAllTimeHigh ? '$f00' : '$ff0' }}{{ team.bestScore }}"
+				 scale="0.25"
+				 style="TextRaceChrono"
+				 halign="right" />
+		</frame>
+
+		{% set curY = bestY + 2.0 + 0.6 %}
+    {% endif %}
+  {% endfor %}
+
+  {# Empty state #}
+  {% if data.teams|length == 0 %}
+  <frame posn="0 -2.2 1">
+    <label posn="7.5 -0.7 2" sizen="14 2"
+           text="$fffWaiting for players..."
+           scale="0.5"
+           halign="center" />
+  </frame>
+  {% endif %}
+
+</frame>
+{% endblock %}
