@@ -8,10 +8,10 @@ Paste a directory `userdata_<PLUGIN_NAME>` into `minicontrol/userdata`.
 Each plugin is "dormant" when server starts. As an admin you usually need to paste a command `//<PLUGIN> start` to start a mini-gamemode.
 
 
-## Contents
+# Contents
 
 
-### Boss Plugin
+## Boss Plugin
 
 Rally up as entire server to defeat the boss!
 This is the fun gamemode, with everybody working together to slay the giant enemy.
@@ -31,7 +31,7 @@ Boss health bar is shown to everyone at the top.
 **Polish level:** Decent, usually works fine, could use nicer text effects and add better damage tracking.
 
 
-### Elim Plugin
+## Elimnation Plugin
 
 Classic multiple-lives knockout mode. Usable only in **cup mode**.
 After each round bottom 20% players loses a life. Warmup rounds do not subtract lives.
@@ -82,7 +82,7 @@ Compatibilie with all gamemodes.
 **Polish level:** Medium, might improve UI and add customizable scoretable.
 
 
-## Q&A
+# Q&A
 
 
 **Q:** Are plugins working for TM2020?
