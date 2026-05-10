@@ -87,11 +87,11 @@ Compatibilie with all gamemodes.
 
 **Q:** Are plugins working for TM2020?
 
-**A:** No, although Minicontrol is supposed to be hybrid between TMF/TM2020 these are written for TM2020.
+**A:** No, although Minicontrol is supposed to be hybrid between TMF/TM2020 these are written for TMF.
 They could be rewritten with different event names and newer Manialink syntax.
 
 
 **Q:** Are these plugins final/production-grade code?
 
-**A:** No, they cover basic gameplay loop and require a bit of work to cover all edge cases and if there is a need from a community I could polish them.
+**A:** No, they cover basics and some are more of a prototypes. If there is a need from a community I could polish them.
 I mostly created them at the go when I felt like pushing an idea to realization.
