@@ -33,20 +33,26 @@ Boss health bar is shown to everyone at the top.
 
 ## Elimnation Plugin
 
-Classic multiple-lives knockout mode. Usable only in **cup mode**.
-After each round bottom 20% players loses a life. Warmup rounds do not subtract lives.
-After 3 lives lost player is eliminated. If player has 0 lives or joins mid-game it is forced to spectator.
+Classic multiple-lives knockout mode. Usable only in **Rounds or Cup mode**.
+After each round bottom percentage of players loses a life. Warmup rounds do not subtract lives.
+After all lives are lost a player is eliminated. If player has 0 lives or joins mid-game it is forced to spectator.
 Plugin abuses Cup scoretable, so no UI needed.
 
 
-`//elim start` starts the elimination. Sets all players to 3 points. Ends the current round
+`//elim start` starts the elimination. Sets all players to max lives and ends the current round
 
 `//elim stop` stops the elimination. After that set `//rpoints` to regular distribution
 
-`//elim setlives <LOGIN> <LIVES>` manually adjust player's score
+`//elim setlives <LOGIN> <LIVES>` manually adjust a player's score
+
+`//elim config lives <LIVES>` set max lives per player (default: 3)
+
+`//elim config percentage <PERCENT>` set the percentage of players that survive each round (default: 85)
+
+`//elim config golden <true/false>` enable or disable golden rounds — last round of a map where 1st place earns a bonus life (default: true)
 
 
-**Polish level:** Low, not adjusted to other gamemodes. Not configurable from command line. Does not track eliminated players.
+**Polish level:** Decent, does not track eliminated players.
 By the nature of "hacky" abusing scoretable has some edge cases (joining mid-game, subtraction at map start, etc.)
 
 
