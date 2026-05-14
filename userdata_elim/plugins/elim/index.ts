@@ -186,7 +186,7 @@ export default class ElimPlugin extends Plugin {
 	private computeIsGoldenRound(): boolean {
 		const eliminations = this.currentSurvivors - Math.round(this.currentSurvivors * this.configSurvivorPercentage);
 		return this.configGoldenRoundEnabled
-//			&& eliminations >= 2
+			&& eliminations >= 2
 			&& (this.currentRoundsThisMap === this.currentRoundsPerMap - 1);
 	}
 
@@ -196,7 +196,7 @@ export default class ElimPlugin extends Plugin {
 
 		if (playersRemain <= 1) {
 			tmc.chat("¤white¤GG! We have a winner!");
-//			await this.onElimStop();
+			await this.onElimStop();
 		}
 	}
 
