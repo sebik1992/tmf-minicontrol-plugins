@@ -2,7 +2,8 @@ import Plugin from "@core/plugins";
 
 export default class ElimPlugin extends Plugin {
 
-	private configMaxLives: number = 3;
+	private configStartLives: number = 3;
+	private configMaxLives: number = 5;
 	private configSurvivorPercentage: number = 0.85;
 	private configGoldenRoundEnabled: boolean = true;
 
@@ -33,7 +34,8 @@ export default class ElimPlugin extends Plugin {
 		tmc.addCommand("//elim start", this.onElimStart.bind(this), "Enable KO plugin");
 		tmc.addCommand("//elim setlives", this.onElimSetLives.bind(this), "Set lives for target player <login> <lives>");
 		tmc.addCommand("//elim stop", this.onElimStop.bind(this), "Disable KO plugin");
-		tmc.addCommand("//elim config lives", this.onElimConfigLives.bind(this), "Set max lives per player <lives>");
+		tmc.addCommand("//elim config startlives", this.onElimConfigStartLives.bind(this), "Set start lives per player <lives>");
+		tmc.addCommand("//elim config maxlives", this.onElimConfigMaxLives.bind(this), "Set maximum lives a player can have <lives>");
 		tmc.addCommand("//elim config percentage", this.onElimConfigSurvivors.bind(this), "Set survivor percentage per round <percentage>");
 		tmc.addCommand("//elim config golden", this.onElimConfigGolden.bind(this), "Enable/disable golden rounds <true/false>");
 
@@ -48,7 +50,8 @@ export default class ElimPlugin extends Plugin {
 		tmc.removeCommand("//elim start");
 		tmc.removeCommand("//elim setlives");
 		tmc.removeCommand("//elim stop");
-		tmc.removeCommand("//elim config lives");
+		tmc.removeCommand("//elim config startlives");
+		tmc.removeCommand("//elim config maxlives");
 		tmc.removeCommand("//elim config percentage");
 		tmc.removeCommand("//elim config golden");
 
@@ -77,11 +80,11 @@ export default class ElimPlugin extends Plugin {
 		this.currentRoundsPerMap = (await tmc.server.call("GetCupRoundsPerChallenge")).CurrentValue;
 		this.isGoldenRound = this.computeIsGoldenRound();
 
-		const playersRemain = await this.setScoresSetFullLives(this.configMaxLives);
+		const playersRemain = await this.setScoresSetFullLives(this.configStartLives);
 		await this.setRoundPoints(playersRemain, false);
 
 		tmc.chat("¤white¤KO mode started!");
-		tmc.chat("¤info¤Everyone has ¤white¤" + this.configMaxLives + "¤info¤ lives. Bottom ¤white¤" + Math.round((1 - this.configSurvivorPercentage) * 100) + "%¤info¤ players each round will lose a life.");
+		tmc.chat("¤info¤Everyone has ¤white¤" + this.configStartLives + "¤info¤ lives. Bottom ¤white¤" + Math.round((1 - this.configSurvivorPercentage) * 100) + "%¤info¤ players each round will lose a life.");
 		tmc.server.call("ForceEndRound");
 	}
 
@@ -89,10 +92,10 @@ export default class ElimPlugin extends Plugin {
 		if (!this.enabled) return;
 
 		const targetLogin = params[0];
-		const targetLives = Number(params[1]);
+		const targetLives = Math.min(Number(params[1]), this.configMaxLives);
 
 		if (!targetLogin || isNaN(targetLives) || targetLives <= 0) {
-			tmc.chat("¤cmd¤Usage: //elim setlives <login> <lives>=1>", login);
+			tmc.chat("¤cmd¤Usage: //elim setlives <login> <lives>", login);
 			return;
 		}
 
@@ -105,15 +108,34 @@ export default class ElimPlugin extends Plugin {
 		await tmc.server.call("ForceScores", playerScores, true);
 	}
 
-	private async onElimConfigLives(login: string, params: string[]): Promise<void> {
+	private async onElimConfigStartLives(login: string, params: string[]): Promise<void> {
 		const lives = Number(params[0]);
 		if (isNaN(lives) || lives < 1) {
-			tmc.chat("¤error¤Usage: //elim config lives <lives>=1>", login);
+			tmc.chat("¤error¤Usage: //elim config startlives <lives>", login);
+			return;
+		}
+		if (lives > this.configMaxLives) {
+			tmc.chat("¤error¤Start lives (" + lives + ") cannot be greater than max lives (" + this.configMaxLives + ")", login);
+			return;
+		}
+
+		this.configStartLives = lives;
+		tmc.chat("¤cmd¤Start lives set to " + lives, login);
+	}
+
+	private async onElimConfigMaxLives(login: string, params: string[]): Promise<void> {
+		const lives = Number(params[0]);
+		if (isNaN(lives) || lives < 1) {
+			tmc.chat("¤error¤Usage: //elim config maxlives <lives>", login);
+			return;
+		}
+		if (lives < this.configStartLives) {
+			tmc.chat("¤error¤Max lives (" + lives + ") cannot be less than start lives (" + this.configStartLives + ")", login);
 			return;
 		}
 
 		this.configMaxLives = lives;
-		tmc.chat("¤cmd¤Lives set to " + lives, login);
+		tmc.chat("¤cmd¤Max lives set to " + lives, login);
 	}
 
 	private async onElimConfigSurvivors(login: string, params: string[]): Promise<void> {
@@ -149,7 +171,6 @@ export default class ElimPlugin extends Plugin {
 	private async onBeginRace(_data: any) {
 		if (!this.enabled) return;
 
-		this.isGoldenRound = false;
 		this.currentRoundsThisMap = 0;
 		this.currentRoundsPerMap = (await tmc.server.call("GetCupRoundsPerChallenge")).CurrentValue;
 		this.isGoldenRound = this.computeIsGoldenRound();
@@ -183,8 +204,12 @@ export default class ElimPlugin extends Plugin {
 		await this.subtractLives(this.isGoldenRound);
 	}
 
+	private computeSurvivors(playerCount: number): number {
+		return Math.max(1, Math.min(playerCount - 1, Math.round(playerCount * this.configSurvivorPercentage)));
+	}
+
 	private computeIsGoldenRound(): boolean {
-		const eliminations = this.currentSurvivors - Math.round(this.currentSurvivors * this.configSurvivorPercentage);
+		const eliminations = this.currentSurvivors - this.computeSurvivors(this.currentSurvivors);
 		return this.configGoldenRoundEnabled
 			&& eliminations >= 2
 			&& (this.currentRoundsThisMap === this.currentRoundsPerMap - 1);
@@ -213,7 +238,7 @@ export default class ElimPlugin extends Plugin {
 			} else {
 				playersInGame++;
 			}
-			playerScores.push({ PlayerId: player.PlayerId, Score: score - 1 });
+			playerScores.push({ PlayerId: player.PlayerId, Score: Math.min(this.configMaxLives , score - 1) });
 		}
 
 		await tmc.server.call("ForceScores", playerScores, true);
@@ -228,7 +253,7 @@ export default class ElimPlugin extends Plugin {
 	}
 
 	private async setRoundPoints(playersRemain: number, isGoldenRound: boolean): Promise<number> {
-		const survivors = Math.max(1, Math.min(playersRemain - 1, Math.round(playersRemain * this.configSurvivorPercentage)));
+		const survivors = this.computeSurvivors(playersRemain);
 		const roundPoints: number[] = Array.from({ length: survivors }, (_, i) => i === 0 && isGoldenRound ? 2 : 1);
 		roundPoints.push(0);
 		tmc.server.call("SetRoundCustomPoints", roundPoints, false);
